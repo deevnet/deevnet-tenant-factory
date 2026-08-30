@@ -1,0 +1,15 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+crash.log
+*.tfplan
+
+# State holds resource detail; keep it in VCS per architecture/tenant/building.md
+# ("VCS for small deployments"), but never the backups or any *.tfvars that
+# might carry a token.
+*.tfstate.backup
+*.auto.tfvars
+secrets.auto.tfvars
+
+# Rendered credentials, if anyone copies one in here
+*.env
