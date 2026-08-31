@@ -65,7 +65,7 @@ resource "proxmox_sdn_subnet" "this" {
   cidr            = local.subnet_cidr
   gateway         = local.gateway
   snat            = true
-  dhcp_dns_server = var.dns_server
+  dhcp_dns_server = coalesce(var.dns_server, local.gateway)
 
   dhcp_range = {
     start_address = "${local.subnet_base}.100"

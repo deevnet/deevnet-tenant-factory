@@ -57,8 +57,16 @@ variable "vnet_count" {
 
 variable "dns_server" {
   type        = string
-  description = "Resolver handed to tenant workloads by fabric DHCP."
-  default     = "10.20.99.1"
+  description = <<-EOT
+    Resolver advertised to tenant workloads by fabric DHCP. PVE requires this
+    to be INSIDE the tenant subnet, so it defaults to the anycast gateway - the
+    fabric's own dnsmasq, which forwards upstream. That is also the better
+    shape: a tenant talks to its own gateway rather than reaching the core
+    router directly, which is what ADR-0001 asks for.
+
+    Override only with another address inside the tenant's own subnet.
+  EOT
+  default     = null
 }
 
 variable "vm_count" {
