@@ -58,15 +58,14 @@ variable "vnet_count" {
 variable "dns_server" {
   type        = string
   description = <<-EOT
-    Resolver advertised to tenant workloads by fabric DHCP. PVE requires this
-    to be INSIDE the tenant subnet, so it defaults to the anycast gateway - the
-    fabric's own dnsmasq, which forwards upstream. That is also the better
-    shape: a tenant talks to its own gateway rather than reaching the core
-    router directly, which is what ADR-0001 asks for.
+    Resolver handed to tenant workloads via cloud-init. Defaults to the
+    substrate resolver on the core router: with no DHCP on an EVPN zone there
+    is no dnsmasq on the anycast gateway, so nothing would answer there.
 
-    Override only with another address inside the tenant's own subnet.
+    Reaching it reaches the perimeter, which is allowed - the tenant->platform
+    path exists for exactly this kind of shared service.
   EOT
-  default     = null
+  default     = "10.20.99.1"
 }
 
 variable "vm_count" {
@@ -100,4 +99,20 @@ variable "ssh_keys" {
   type        = list(string)
   description = "Public keys injected by cloud-init."
   default     = []
+}
+
+# --- Needed only by the zone-DHCP workaround below; see main.tf --------------
+
+variable "proxmox_url" {
+  type        = string
+  description = "PVE API endpoint. Only used to set the zone DHCP backend, which the provider cannot express."
+}
+
+variable "proxmox_token_id" {
+  type = string
+}
+
+variable "proxmox_token_secret" {
+  type      = string
+  sensitive = true
 }

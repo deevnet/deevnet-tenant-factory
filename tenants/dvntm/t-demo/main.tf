@@ -41,6 +41,10 @@ module "tenant" {
   controller_id = data.terraform_remote_state.fabric.outputs.controller_id
   node          = data.terraform_remote_state.fabric.outputs.node
 
+  proxmox_url          = var.proxmox_url
+  proxmox_token_id     = var.proxmox_token_id
+  proxmox_token_secret = var.proxmox_token_secret
+
   template_vm_id = var.template_vm_id
   vm_count       = 1
   ssh_keys       = var.ssh_keys

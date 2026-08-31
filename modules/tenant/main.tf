@@ -16,6 +16,14 @@ locals {
   subnet_base = "10.${var.site_octet}.${128 + var.tenant_index}"
   gateway     = "${local.subnet_base}.1"
 
+  # Workload addresses. PVE cannot serve DHCP on an EVPN zone, so addresses are
+  # derived rather than leased: .10 upwards, leaving .1 for the anycast gateway
+  # and .2-.9 for future fabric use. Deterministic addressing also matches the
+  # MAC-keyed, inventory-declared model the rest of this estate already uses.
+  vm_addresses = [
+    for i in range(var.vm_count) : "${local.subnet_base}.${10 + i}/24"
+  ]
+
   vnet_ids = {
     for i in range(var.vnet_count) :
     i => format("%.6s%d", var.tenant_name, i)
@@ -60,17 +68,18 @@ resource "proxmox_sdn_vnet" "this" {
 # snat is what keeps the ADR's promise that the perimeter never learns tenant
 # subnets: traffic is translated to the exit node's transit address on the way
 # out, so the core router only ever sees the transit network.
+#
+# No dhcp_range here, and that is not an omission. PVE implements SDN DHCP in
+# the *Simple* zone plugin only - EVPN, VLAN and VXLAN zones have no DHCP
+# support at all in 9.2 (verified in PVE/Network/SDN/Zones/*Plugin.pm, and the
+# API rejects the attribute outright: "unexpected property 'dhcp'"). So the
+# subnet defines the tenant's address space and its anycast gateway, and
+# addresses are handed to workloads by cloud-init instead of leased.
 resource "proxmox_sdn_subnet" "this" {
-  vnet            = proxmox_sdn_vnet.this[0].id
-  cidr            = local.subnet_cidr
-  gateway         = local.gateway
-  snat            = true
-  dhcp_dns_server = coalesce(var.dns_server, local.gateway)
-
-  dhcp_range = {
-    start_address = "${local.subnet_base}.100"
-    end_address   = "${local.subnet_base}.200"
-  }
+  vnet    = proxmox_sdn_vnet.this[0].id
+  cidr    = local.subnet_cidr
+  gateway = local.gateway
+  snat    = true
 
   depends_on = [proxmox_sdn_applier.finalizer]
 }
@@ -111,6 +120,14 @@ resource "proxmox_virtual_environment_vm" "this" {
     enabled = true
   }
 
+  # With the agent enabled the provider waits for the guest to report an IPv4
+  # before it calls the create done. If the guest cannot get addressed - no
+  # cloud-init in the template, say - that wait runs to the default timeout and
+  # looks like a hang rather than a failure, while holding the state lock.
+  # Ten minutes is generous for clone-and-boot and short enough to be a
+  # diagnosis instead of an afternoon.
+  timeout_create = 600
+
   network_device {
     bridge = proxmox_sdn_vnet.this[0].id
   }
@@ -120,8 +137,13 @@ resource "proxmox_virtual_environment_vm" "this" {
 
     ip_config {
       ipv4 {
-        address = "dhcp"
+        address = local.vm_addresses[count.index]
+        gateway = local.gateway
       }
+    }
+
+    dns {
+      servers = [var.dns_server != null ? var.dns_server : local.gateway]
     }
 
     dynamic "user_account" {
