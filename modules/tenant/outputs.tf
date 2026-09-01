@@ -4,7 +4,7 @@ output "vrf_vni" {
 }
 
 output "subnet" {
-  description = "Overlay subnet, served by fabric IPAM/DHCP."
+  description = "Overlay subnet. Registered in fabric IPAM; workloads are addressed by cloud-init."
   value       = local.subnet_cidr
 }
 

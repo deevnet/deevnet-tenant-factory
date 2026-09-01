@@ -44,6 +44,19 @@ make fmt
 
 ## Verification that actually matters
 
-A tenant is correct when its VM takes an address from **fabric** DHCP (not
-OPNsense Kea), reaches its anycast gateway, egresses with the core router
-seeing only the transit address, and cannot reach another tenant's subnet.
+A tenant is correct when its VM carries the address cloud-init gave it (there
+is no fabric DHCP — Proxmox implements SDN DHCP for *Simple* zones only),
+reaches its anycast gateway, egresses with the core router seeing only the
+transit address, and cannot reach another tenant's subnet.
+
+Verify egress **from inside the workload**, not from the exit node's SNAT
+counter. A climbing counter only proves packets left; it was the basis of the
+ADR-0003 misdiagnosis, where requests egressed and were answered while the
+replies were dropped on the way back in. `ping` and `curl` in the VM are the
+test.
+
+Egress also has to leave the *right way*. `ip route get <mgmt-address> vrf
+vrf_<tenant>` on the node must resolve via the transit interface. If it
+resolves via the management bridge, the VRF is falling through to the node's
+main routing table and tenant traffic is reaching the management segment
+without passing the perimeter.

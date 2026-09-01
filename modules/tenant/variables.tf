@@ -100,19 +100,3 @@ variable "ssh_keys" {
   description = "Public keys injected by cloud-init."
   default     = []
 }
-
-# --- Needed only by the zone-DHCP workaround below; see main.tf --------------
-
-variable "proxmox_url" {
-  type        = string
-  description = "PVE API endpoint. Only used to set the zone DHCP backend, which the provider cannot express."
-}
-
-variable "proxmox_token_id" {
-  type = string
-}
-
-variable "proxmox_token_secret" {
-  type      = string
-  sensitive = true
-}
