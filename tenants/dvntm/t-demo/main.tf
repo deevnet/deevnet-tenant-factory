@@ -24,6 +24,18 @@ provider "proxmox" {
   insecure  = true
 }
 
+# Publication credentials (ADR-0004). The key is scoped by the server to this
+# tenant's zones, so this configuration cannot write into another tenant's
+# namespace even by mistake - an update aimed elsewhere comes back REFUSED.
+provider "dns" {
+  update {
+    server        = var.dns_update_server
+    key_name      = "${var.tsig_key_name}."
+    key_algorithm = "hmac-sha256"
+    key_secret    = var.tsig_key_secret
+  }
+}
+
 data "terraform_remote_state" "fabric" {
   backend = "local"
 
@@ -45,6 +57,11 @@ module "tenant" {
   template_vm_id = var.template_vm_id
   vm_count       = 1
   ssh_keys       = var.ssh_keys
+
+  # Workload A and PTR records derive from the addressing, so nothing is listed
+  # here. dns_extra_records is where a tenant adds service names - the thing the
+  # Proxmox IPAM hook could never have given us.
+  dns_publish = true
 }
 
 output "subnet" {
@@ -65,4 +82,12 @@ output "vnet_ids" {
 
 output "vm_names" {
   value = module.tenant.vm_names
+}
+
+output "dns_zone" {
+  value = module.tenant.dns_zone
+}
+
+output "dns_names" {
+  value = module.tenant.dns_names
 }

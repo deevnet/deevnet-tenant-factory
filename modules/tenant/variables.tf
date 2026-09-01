@@ -100,3 +100,48 @@ variable "ssh_keys" {
   description = "Public keys injected by cloud-init."
   default     = []
 }
+
+# --- DNS publication (ADR-0004) ----------------------------------------------
+
+variable "dns_publish" {
+  type        = bool
+  description = <<-EOT
+    Publish this tenant's names into its delegated zone. The substrate creates
+    the zone and issues the TSIG key at onboarding; everything after that -
+    records, rebuilds, destroys - is this module's job and touches no substrate
+    repository.
+  EOT
+  default     = true
+}
+
+variable "dns_substrate" {
+  type        = string
+  description = "Site label in the zone name: dvntm or dvnt."
+  default     = "dvntm"
+}
+
+variable "dns_root_domain" {
+  type        = string
+  description = "Root domain the site zone hangs off."
+  default     = "deevnet.net"
+}
+
+variable "dns_ttl" {
+  type        = number
+  description = "TTL for published records."
+  default     = 300
+}
+
+variable "dns_extra_records" {
+  type        = map(string)
+  description = <<-EOT
+    Tenant-authored names beyond the per-workload A records, as
+    name -> IPv4 address. Keys are relative to the tenant zone, so
+    "api" becomes api.<tenant>.<site>.deevnet.net.
+
+    This is the half of the tenant contract that the Proxmox IPAM hook could
+    never have provided: it registers one address at allocation time and has no
+    concept of a service name.
+  EOT
+  default     = {}
+}

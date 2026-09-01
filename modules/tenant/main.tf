@@ -163,3 +163,66 @@ resource "proxmox_virtual_environment_vm" "this" {
   # The VNet has to exist as a bridge on the node before a VM can attach to it.
   depends_on = [proxmox_sdn_applier.tenant]
 }
+
+# --- DNS publication (ADR-0004) ----------------------------------------------
+#
+# The tenant authors its own names. The substrate created the zone and issued
+# the TSIG key at onboarding, and does nothing further: adding a record here,
+# rebuilding, or destroying the tenant never touches a substrate repository.
+#
+# These are RFC 2136 dynamic updates signed with the tenant's own key. The
+# server accepts them for this tenant's zones and refuses them for anyone
+# else's - the namespace boundary is enforced by PowerDNS, not by this module
+# being well behaved.
+#
+# Not derived from Proxmox IPAM on purpose. PVE only writes a DNS record from
+# its IPAM allocation paths, which this module does not use, and would give one
+# A record per address with no way to name a service.
+
+locals {
+  dns_zone = "${var.tenant_name}.${var.dns_substrate}.${var.dns_root_domain}"
+
+  # Reverse zone for the overlay /24, derived from tenant_index like everything
+  # else: 10.20.129.0/24 -> 129.20.10.in-addr.arpa
+  dns_reverse_zone = "${128 + var.tenant_index}.${var.site_octet}.10.in-addr.arpa"
+
+  # Workload addresses are already deterministic, so the A records derive with
+  # no new input: tdemo-1 -> 10.20.129.10, and so on.
+  dns_workload_records = var.dns_publish ? {
+    for i in range(var.vm_count) :
+    "${var.tenant_name}-${i + 1}" => "${local.subnet_base}.${10 + i}"
+  } : {}
+
+  dns_extra = var.dns_publish ? var.dns_extra_records : {}
+}
+
+# One A record per workload.
+resource "dns_a_record_set" "workload" {
+  for_each = local.dns_workload_records
+
+  zone      = "${local.dns_zone}."
+  name      = each.key
+  addresses = [each.value]
+  ttl       = var.dns_ttl
+}
+
+# Tenant-authored service names: api, www, whatever the tenant needs.
+resource "dns_a_record_set" "extra" {
+  for_each = local.dns_extra
+
+  zone      = "${local.dns_zone}."
+  name      = each.key
+  addresses = [each.value]
+  ttl       = var.dns_ttl
+}
+
+# Reverse records. Cheap, because the reverse zone is delegated per tenant
+# alongside the forward one and the addressing is deterministic.
+resource "dns_ptr_record" "workload" {
+  for_each = local.dns_workload_records
+
+  zone = "${local.dns_reverse_zone}."
+  name = split(".", each.value)[3]
+  ptr  = "${each.key}.${local.dns_zone}."
+  ttl  = var.dns_ttl
+}
