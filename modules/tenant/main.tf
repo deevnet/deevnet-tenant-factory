@@ -45,6 +45,11 @@ resource "proxmox_sdn_zone_evpn" "this" {
   exit_nodes        = [var.node]
   primary_exit_node = var.node
 
+  # exit_nodes_local_routing is deliberately left at its default. It was tried
+  # against the single-member egress problem and does nothing for it - it
+  # governs reaching a VM's services FROM an exit node, not giving a VM a way
+  # out. See ADR-0003.
+
   advertise_subnets = true
   ipam              = "pve"
 
