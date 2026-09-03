@@ -31,7 +31,16 @@ the numbering. If this repo disagrees with those, the ADRs win.
   hypervisor interfaces — is Ansible's, in `ansible-collection-deevnet.net`
   (see the `proxmox_node_network` role). Do not reach into it from here.
 - **No secrets in this repo.** Credentials come from the image factory's
-  rendered env file. Never add a `*.tfvars` holding a token.
+  rendered env file. Never add a `*.tfvars` holding a token. That includes the
+  TSIG secret: pass it as `TF_VAR_tsig_key_secret`, sourced from the substrate
+  vault (`vault_tenant_tsig_keys`).
+- **DNS records are tenant content (ADR-0004).** A tenant publishes into its own
+  delegated zone `<tenant>.<site>.deevnet.net` over RFC 2136, signed with a TSIG
+  key the substrate issued and bound to that tenant's zones. Workload A and PTR
+  records derive from the addressing; `dns_extra_records` is where a tenant adds
+  service names. Do **not** reach for Proxmox's SDN DNS integration: it only
+  writes a record from the IPAM allocation paths, which this module does not
+  use, so it would publish nothing.
 
 ## Commands
 
