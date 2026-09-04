@@ -1,0 +1,23 @@
+# Terraform
+.terraform/
+crash.log
+*.tfplan
+.terraform.tfstate.lock.info
+
+# Provider pins ARE committed: a module pinned by tag with providers left to
+# float is half a pin, and the floating half is the dangerous one (ADR-0006).
+
+# State is NOT committed. It lives in the substrate's state store (ADR-0007);
+# a tenant that declines the store and keeps state locally should remove the
+# line below and understand it is then holding its own custody.
+terraform.tfstate
+terraform.tfstate.backup
+
+# Issued by the substrate, not authored here - re-issue rather than commit.
+fabric.auto.tfvars
+
+# Never: the TSIG secret and the state credential arrive as environment
+# variables, not files.
+*.auto.tfvars
+secrets.auto.tfvars
+*.env
