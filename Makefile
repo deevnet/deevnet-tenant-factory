@@ -133,7 +133,11 @@ tenant-attachment: require-tenant
 # the index is overridden here rather than in the file.
 example-plan: $(PVE_ENV)
 	source "$(PVE_ENV)"
-	terraform -chdir=examples/tenant init -upgrade -input=false
+	terraform -chdir=examples/tenant init -upgrade -input=false >/dev/null
+	# The attachment comes from the registry, exactly as a real tenant's does, so
+	# this plans against the fabric that actually exists rather than against
+	# values typed in here.
+	eval $$(python3 -c "import yaml; d=yaml.safe_load(open('$(INVENTORY)/group_vars/all/tenants.yml'))['deevnet_tenant_fabric']; print('export TF_VAR_controller_id=%s TF_VAR_node=%s' % (d['controller_id'], d['node']))")
 	TF_VAR_tenant_index=$(EXAMPLE_INDEX) \
 	TF_VAR_tenant_name=example \
 	TF_VAR_tsig_key_secret=$${TF_VAR_tsig_key_secret:-$$(head -c 32 /dev/urandom | base64)} \
@@ -148,8 +152,15 @@ fmt:
 # validate themselves. The example takes its place, so the thing every new
 # tenant is copied from is the thing that gets checked here.
 validate:
-	for d in $(FABRIC) modules/tenant examples/tenant; do
+	for d in $(FABRIC) modules/tenant; do
 		echo "== $$d"
 		terraform -chdir=$$d init -backend=false -input=false >/dev/null
 		terraform -chdir=$$d validate
 	done
+	# The example is validated at the reserved index, not at its own. It ships
+	# with tenant_index = 0 precisely so it cannot be applied, and terraform
+	# validate evaluates variable validations - so validating it as-shipped would
+	# report the guard working as a failure.
+	echo "== examples/tenant (at reserved index $(EXAMPLE_INDEX))"
+	terraform -chdir=examples/tenant init -backend=false -input=false >/dev/null
+	TF_VAR_tenant_index=$(EXAMPLE_INDEX) terraform -chdir=examples/tenant validate

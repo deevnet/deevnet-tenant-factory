@@ -77,3 +77,27 @@ variable "node" {
   type        = string
   description = "Proxmox node the tenant's workloads land on. Issued by the substrate."
 }
+
+# --- Tenant identity ---------------------------------------------------------
+# The two values that actually differ between tenants. Both ship with markers
+# rather than plausible values, so an unedited copy fails loudly instead of
+# quietly becoming a second tenant with someone else's name.
+
+variable "tenant_name" {
+  type        = string
+  description = "This tenant's name. Set it in terraform.tfvars."
+  default     = "REPLACE-ME"
+}
+
+variable "tenant_index" {
+  type        = number
+  description = <<-EOT
+    This tenant's index, allocated in the factory's TENANTS.md. Set it in
+    terraform.tfvars.
+
+    The default of 0 is deliberately outside ADR-0002's valid range of 1-63:
+    it marks this as the reference implementation, so an unedited copy cannot
+    be applied. The module rejects it.
+  EOT
+  default     = 0
+}

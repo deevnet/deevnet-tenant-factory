@@ -72,11 +72,8 @@ provider "dns" {
 module "tenant" {
   source = "git::ssh://git@github.com/deevnet/deevnet-tenant-factory.git//modules/tenant?ref=tenant-module-v1.1.0"
 
-  tenant_name  = "REPLACE-ME"
-
-  # 0 is deliberately invalid (ADR-0002 allows 1-63). This example cannot be
-  # applied as it stands - allocate a real index in TENANTS.md first.
-  tenant_index = 0
+  tenant_name  = var.tenant_name
+  tenant_index = var.tenant_index
 
   # Issued by the substrate at onboarding, in fabric.auto.tfvars - see ADR-0006.
   # Previously read out of the fabric's Terraform state by relative path, which
