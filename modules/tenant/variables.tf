@@ -19,6 +19,23 @@ variable "tenant_index" {
     collide when the fabric gains members. Allocated once in TENANTS.md and
     never reused while the tenant exists.
   EOT
+
+  # The range is ADR-0002's own: the site /18 holds 63 tenants. Index 0 is
+  # excluded and carries a second job - it marks the reference implementation in
+  # examples/, so that example CANNOT be applied rather than merely asking not to
+  # be. A guard rail that depends on being read is not a guard rail.
+  validation {
+    condition     = var.tenant_index >= 1 && var.tenant_index <= 63
+    error_message = <<-EOT
+      tenant_index must be 1-63 (ADR-0002: the site /18 holds 63 tenants).
+
+      Index 0 marks the reference implementation and is deliberately invalid.
+      To create a tenant, copy examples/tenant/ into its own repository and
+      allocate a real index in TENANTS.md:
+
+        cp -r examples/tenant/. ../deevnet-tenant-<name>/
+    EOT
+  }
 }
 
 variable "controller_id" {

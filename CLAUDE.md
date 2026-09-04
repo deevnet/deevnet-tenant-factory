@@ -12,6 +12,15 @@ the numbering. If this repo disagrees with those, the ADRs win.
 
 ## Rules that are easy to get wrong
 
+- **Tenants do not live in this repository.** Each tenant is its own repo,
+  `deevnet-tenant-<name>` (ADR-0006). What lives here is the substrate half:
+  the fabric, the module, the registry, the reference implementation.
+- **`examples/tenant/` is never applied.** It ships with `tenant_index = 0`,
+  which the module rejects, so an unedited copy cannot be applied. Do not
+  "fix" that by giving it a valid index - the invalidity is the guard.
+- **Never move a module tag.** Tenants pin `?ref=tenant-module-vX.Y.Z`, and a
+  moved tag silently changes what an already-applied tenant is running.
+
 - **A VRF is an EVPN zone.** `vrf_vxlan` is per-zone, so "one VRF per tenant"
   means one `proxmox_sdn_zone_evpn` per tenant. Zones belong to the tenant
   module; the fabric stack holds only the shared underlay, VTEP identity, and
@@ -46,8 +55,10 @@ the numbering. If this repo disagrees with those, the ADRs win.
 
 ```bash
 make fabric-plan / fabric-apply
-make tenant-plan TENANT=tenants/dvntm/<name>
-make validate      # every stack
+make fabric-contract                 # issued attachment vs the fabric's outputs
+make tenant-attachment TENANT=<path> # issue a tenant its controller_id / node
+make validate                        # fabric, module, and the example
+make example-plan                    # live plan of the example, creates nothing
 make fmt
 ```
 

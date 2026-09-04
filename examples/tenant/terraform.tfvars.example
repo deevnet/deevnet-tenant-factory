@@ -1,0 +1,18 @@
+# Copy to terraform.tfvars and fill in.
+#
+# What must NOT go here: the TSIG secret and the state credential. Both arrive
+# as environment variables, because a secret in a file is a secret in a
+# repository sooner or later (secure-identity 4.3).
+
+# The two values that differ between tenants.
+tenant_name  = "REPLACE-ME"
+tenant_index = 0        # allocate a real one in TENANTS.md - 0 is refused
+
+# Public key injected into workloads by cloud-init. Public half only.
+ssh_keys = [
+  "ssh-rsa AAAA... a_autoprov@vdvntm-admin-01",
+]
+
+# VMID of the Fedora template on the tenant hypervisor. Changes every time the
+# image factory rebuilds it, so confirm before a first apply.
+# template_vm_id = 100

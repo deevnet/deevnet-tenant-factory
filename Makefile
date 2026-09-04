@@ -14,6 +14,9 @@ PVE_ENV       := $(IMAGE_FACTORY)/build/pve-env/$(PVE_NODE).env
 
 FABRIC  ?= fabric/dvntm-hv02
 INVENTORY ?= $(CURDIR)/../ansible-inventory-deevnet/dvntm
+# Index reserved in TENANTS.md for planning the reference implementation. Never
+# applied, so it never collides with a real tenant.
+EXAMPLE_INDEX ?= 63
 # No default: tenants live in their own repos, so a bare `make tenant-apply` or
 # `make tenant-destroy` must not silently target a live workload that happens to
 # still be checked in here.
@@ -24,7 +27,7 @@ TENANT  ?=
 # non-interactive run (no TTY, CI, or an agent driving it).
 TF_APPROVE := $(if $(AUTO),-auto-approve,)
 
-.PHONY: help creds fabric-init fabric-plan fabric-apply fabric-contract tenant-attachment require-tenant tenant-init tenant-plan tenant-apply tenant-destroy fmt validate
+.PHONY: help creds fabric-init fabric-plan fabric-apply fabric-contract tenant-attachment example-plan require-tenant tenant-init tenant-plan tenant-apply tenant-destroy fmt validate
 
 help:
 	@echo "Deevnet Tenant Factory"
@@ -120,11 +123,44 @@ tenant-attachment: require-tenant
 	echo "issued $(TENANT)/fabric.auto.tfvars"
 	cat "$(TENANT)/fabric.auto.tfvars"
 
+# A real plan against the real fabric, at an index reserved in TENANTS.md and
+# never applied. This is the layer that catches an example which is
+# syntactically fine and semantically stale: a plan is a live API round trip, so
+# it proves the module tag resolves, the inputs are satisfied, and the
+# controller, node and template actually exist. It creates nothing.
+#
+# The example's own tenant_index is 0, which the module rejects on purpose, so
+# the index is overridden here rather than in the file.
+example-plan: $(PVE_ENV)
+	source "$(PVE_ENV)"
+	terraform -chdir=examples/tenant init -upgrade -input=false >/dev/null
+	# The attachment comes from the registry, exactly as a real tenant's does, so
+	# this plans against the fabric that actually exists rather than against
+	# values typed in here.
+	eval $$(python3 -c "import yaml; d=yaml.safe_load(open('$(INVENTORY)/group_vars/all/tenants.yml'))['deevnet_tenant_fabric']; print('export TF_VAR_controller_id=%s TF_VAR_node=%s' % (d['controller_id'], d['node']))")
+	TF_VAR_tenant_index=$(EXAMPLE_INDEX) \
+	TF_VAR_tenant_name=example \
+	TF_VAR_tsig_key_secret=$${TF_VAR_tsig_key_secret:-$$(head -c 32 /dev/urandom | base64)} \
+	terraform -chdir=examples/tenant plan -refresh=false -input=false
+
+# Proves the example is still applyable-shaped: that the module tag resolves and
+# every input it passes still exists. Cheap, and most drift dies here.
 fmt:
 	terraform fmt -recursive
 
+# TENANT is no longer part of this: tenants live in their own repositories and
+# validate themselves. The example takes its place, so the thing every new
+# tenant is copied from is the thing that gets checked here.
 validate:
-	for d in $(FABRIC) modules/tenant $(TENANT); do
+	for d in $(FABRIC) modules/tenant; do
 		echo "== $$d"
+		terraform -chdir=$$d init -backend=false -input=false >/dev/null
 		terraform -chdir=$$d validate
 	done
+	# The example is validated at the reserved index, not at its own. It ships
+	# with tenant_index = 0 precisely so it cannot be applied, and terraform
+	# validate evaluates variable validations - so validating it as-shipped would
+	# report the guard working as a failure.
+	echo "== examples/tenant (at reserved index $(EXAMPLE_INDEX))"
+	terraform -chdir=examples/tenant init -backend=false -input=false >/dev/null
+	TF_VAR_tenant_index=$(EXAMPLE_INDEX) terraform -chdir=examples/tenant validate

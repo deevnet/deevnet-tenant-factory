@@ -10,9 +10,18 @@ crash.log
 # init could therefore resolve a provider that plans a replacement against live
 # SDN objects.
 #
-# State holds resource detail; keep it in VCS per architecture/tenant/building.md
-# ("VCS for small deployments"), but never the backups or any *.tfvars that
-# might carry a token.
+# The fabric's state is committed here. It is five substrate-owned resources
+# with one operator, and a repository is a perfectly good home for that: clone
+# gives you code and state together, and history gives you every prior state
+# with no restore path to rehearse.
+#
+# Tenants do NOT keep state here - they are not here at all (ADR-0006), and
+# their state lives in the substrate's store or wherever they choose to carry it
+# (ADR-0007).
+#
+# Either way the invariant holds: whatever holds state is a secret store the
+# moment state contains a secret, so no resource is declared whose value cannot
+# be re-derived. Backups and any *.tfvars that might carry a token stay out.
 *.tfstate.backup
 *.auto.tfvars
 secrets.auto.tfvars
