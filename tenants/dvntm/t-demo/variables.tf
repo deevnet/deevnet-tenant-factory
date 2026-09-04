@@ -19,7 +19,7 @@ variable "template_vm_id" {
     rather than reusing one - so it is a variable rather than a constant, and
     it needs updating after a rebuild.
   EOT
-  default     = 103
+  default     = 100
 }
 
 variable "ssh_keys" {

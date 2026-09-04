@@ -1,9 +1,15 @@
 # Terraform
 .terraform/
-.terraform.lock.hcl
 crash.log
 *.tfplan
 
+# Provider lock files ARE committed. A module pinned by tag with providers left
+# to float is half a pin, and the floating half is the dangerous one: the
+# bpg/proxmox constraint here is ~> 0.101, which admits everything below 1.0 on
+# a provider whose own comments call the SDN resources "still settling". A fresh
+# init could therefore resolve a provider that plans a replacement against live
+# SDN objects.
+#
 # State holds resource detail; keep it in VCS per architecture/tenant/building.md
 # ("VCS for small deployments"), but never the backups or any *.tfvars that
 # might carry a token.
