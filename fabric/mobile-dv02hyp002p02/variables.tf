@@ -17,7 +17,7 @@ variable "proxmox_token_secret" {
 variable "proxmox_node" {
   type        = string
   description = "PVE node name hosting this fabric"
-  default     = "pve2"
+  default     = "dv02hyp002p02"
 }
 
 # --- Numbering (ADR-0002) ----------------------------------------------------
