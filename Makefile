@@ -12,7 +12,7 @@ IMAGE_FACTORY ?= $(CURDIR)/../deevnet-image-factory
 PVE_NODE      ?= pve2
 PVE_ENV       := $(IMAGE_FACTORY)/build/pve-env/$(PVE_NODE).env
 
-FABRIC  ?= fabric/dvntm-hv02
+FABRIC  ?= fabric/mobile-dv02hyp002p02
 INVENTORY ?= $(CURDIR)/../ansible-inventory-deevnet/mobile
 # Index reserved in TENANTS.md for planning the reference implementation. Never
 # applied, so it never collides with a real tenant.
