@@ -133,8 +133,8 @@ variable "dns_publish" {
 
 variable "dns_substrate" {
   type        = string
-  description = "Site label in the zone name: dvntm or dvnt."
-  default     = "dvntm"
+  description = "Site label in the zone name: mobile or home."
+  default     = "mobile"
 }
 
 variable "dns_root_domain" {

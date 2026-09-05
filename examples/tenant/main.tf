@@ -27,7 +27,7 @@ terraform {
   #   bucket       = "tf-state"
   #   key          = "tenants/REPLACE-ME/terraform.tfstate"
   #   region       = "us-east-1"
-  #   endpoints    = { s3 = "http://tfstate.dvntm.deevnet.net:9000" }
+  #   endpoints    = { s3 = "http://tfstate.mobile.deevnet.net:9000" }
   #   use_lockfile = true
   #
   #   # MinIO, not AWS.
