@@ -8,7 +8,7 @@ the row in the same change that adds the tenant directory.
 
 | Index | Tenant | VRF VNI | VNet VNI(s) | Overlay subnet | DNS zone | Status |
 |------:|--------|--------:|-------------|----------------|----------|--------|
-| 1 | `tdemo` | 10001 | 20010 | 10.20.129.0/24 | `tdemo.dvntm.deevnet.net` | demo — destroy after verification |
+| 1 | *(free)* | — | — | — | — | `tdemo` was destroyed 2026-09-05 after verification; index released |
 | 63 | *(reserved)* | — | — | — | — | reference-implementation plan target — never applied |
 
 ## Derivation (ADR-0002)
