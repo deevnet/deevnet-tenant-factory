@@ -44,7 +44,7 @@ require-secret:
 		echo "TF_VAR_tsig_key_secret is not set." >&2
 		echo "It is issued by the substrate and lives in the inventory vault." >&2
 		echo "  export TF_VAR_tsig_key_secret=\$$(ansible-vault view \\" >&2
-		echo "    ../ansible-inventory-deevnet/dvntm/group_vars/all/vault.yml \\" >&2
+		echo "    ../ansible-inventory-deevnet/mobile/group_vars/all/vault.yml \\" >&2
 		echo "    | yq -r .vault_tenant_tsig_keys.REPLACE-ME)" >&2
 		exit 2
 	fi
