@@ -15,7 +15,7 @@ the implementation.
 ## Layout
 
 ```
-fabric/dvntm-hv02/   the fabric itself - substrate-owned, built once
+fabric/mobile-dv02hyp002p02/   the fabric itself - substrate-owned, built once
 modules/tenant/      one tenant: VRF + VNet(s) + subnet + VMs
 examples/tenant/     the reference implementation - copied OUT, never applied
 TENANTS.md           the tenant_index registry - allocate here first
@@ -95,7 +95,7 @@ they cannot, from another repository. The substrate **issues** them at
 onboarding, beside the TSIG key and the egress, from the tenant registry in
 `ansible-inventory-deevnet`.
 
-A tenant never *invents* them. `fabric/dvntm-hv02/outputs.tf` remains the source
+A tenant never *invents* them. `fabric/mobile-dv02hyp002p02/outputs.tf` remains the source
 of truth, and `make fabric-contract` diffs what was issued against it.
 
 ## Scope
