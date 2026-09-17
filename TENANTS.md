@@ -1,4 +1,4 @@
-# Tenant allocations — dvntm
+# Tenant allocations — mobile
 
 `tenant_index` is the single number a tenant is allocated. Everything else
 derives from it, so this table is the only place a collision can happen.
@@ -8,12 +8,12 @@ the row in the same change that adds the tenant directory.
 
 | Index | Tenant | VRF VNI | VNet VNI(s) | Overlay subnet | DNS zone | Status |
 |------:|--------|--------:|-------------|----------------|----------|--------|
-| 1 | *(free)* | — | — | — | — | `tdemo` was destroyed 2026-09-05 after verification; index released |
+| 1 | `eds` | 10001 | 20010 | 10.20.129.0/24 | `eds.mobile.deevnet.net` | Onboarded 2026-09-07 (`deevnet_tenants`), never applied. Lives in the EdS monorepo at `infra/deevnet-tenant-eds`. Index 1 was `tdemo` until it was destroyed on 2026-09-05. |
 | 63 | *(reserved)* | — | — | — | — | reference-implementation plan target — never applied |
 
 ## Derivation (ADR-0002)
 
-For tenant index `n` on dvntm:
+For tenant index `n` on mobile (dvntm):
 
 | Identifier | Formula | n = 1 |
 |---|---|---|
@@ -22,10 +22,10 @@ For tenant index `n` on dvntm:
 | Overlay subnet | `10.20.{128+n}.0/24` | 10.20.129.0/24 |
 | Anycast gateway | `.1` of that subnet | 10.20.129.1 |
 | Workload addresses | `.10` upward, by index | 10.20.129.10, .11, … |
-| Forward DNS zone | `<tenant>.<site>.deevnet.net` | `tdemo.dvntm.deevnet.net` |
+| Forward DNS zone | `<tenant>.<site>.deevnet.net` | `eds.mobile.deevnet.net` |
 | Reverse DNS zone | `{128+n}.{site octet}.10.in-addr.arpa` | `129.20.10.in-addr.arpa` |
 
-dvnt uses the same formulas with bases 11000 / 21000 and `10.10.`.
+home (dvnt) uses the same formulas with bases 11000 / 21000 and `10.10.`.
 
 There is **no DHCP range**. Proxmox implements SDN DHCP in the *Simple* zone
 plugin only; EVPN zones have none, and the API rejects the attribute. Workloads
